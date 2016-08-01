@@ -11,7 +11,22 @@ app.get('/', function (req, res){
     res.send('Todo Rest API');
 });
 app.get('/todos', function (req, res){
-    res.json(todos);
+    var queryParams = req.query;
+    var filterdTodos = todos;
+
+    if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
+        filterdTodos = _.where(filterdTodos, {completed: true});
+    }
+    else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
+        filterdTodos = _.where(filterdTodos, {completed: false});
+    }
+    if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0 ){
+        filterdTodos = _.filter(filterdTodos, function(todo){
+            return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+        });
+    }
+    res.json(filterdTodos);
+
 });
 app.get('/todos/:id', function(req, res){
     var todoId = parseInt(req.params.id);
