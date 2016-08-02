@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var _ = require('underscore')
+var _ = require('underscore');
+var db = require('./db.js');
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
@@ -95,6 +96,8 @@ app.put('/todos/:id', function(req, res){
         return res.status(404).json({"error": "No todos with given id found"});
     }
 });
-app.listen(PORT, function(){
-    console.log('Server listening on ' + PORT);
+db.sequelize.sync().then(function(){
+    app.listen(PORT, function(){
+        console.log('Server listening on ' + PORT);
+    });
 });
