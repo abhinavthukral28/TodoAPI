@@ -4,40 +4,46 @@ var _ = require('underscore');
 var db = require('./db.js');
 var app = express();
 var PORT = process.env.PORT || 3000;
-var todos = [];
-var todoNextId = 1;
 
 app.use(bodyParser.json());
 app.get('/', function (req, res){
     res.send('Todo Rest API');
 });
 app.get('/todos', function (req, res){
-    var queryParams = req.query;
-    var filterdTodos = todos;
+    var query = req.query;
+    var where = {};
 
-    if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
-        filterdTodos = _.where(filterdTodos, {completed: true});
+    if(query.hasOwnProperty('completed') && query.completed === 'true'){
+        where.completed = true;
     }
-    else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
-        filterdTodos = _.where(filterdTodos, {completed: false});
+    else if(query.hasOwnProperty('completed') && query.completed === 'false'){
+        where.completed = false;
     }
-    if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0 ){
-        filterdTodos = _.filter(filterdTodos, function(todo){
-            return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
-        });
+    if(query.hasOwnProperty('q') && query.q.length > 0 ){
+        where.description = {
+            $like: '%' + query.q + '%'
+        };
     }
-    res.json(filterdTodos);
+    db.todo.findAll({where: where}).then(function(todos){
+        res.json(todos);
+    }, function(e){
+        res.status(500).send();
+    });
 
 });
 app.get('/todos/:id', function(req, res){
     var todoId = parseInt(req.params.id);
-    var matchedTodo = _.findWhere(todos, {id: todoId});
-    if(matchedTodo){
-        res.json(matchedTodo);
-    }
-    else {
-        res.status(404).send();
-    }
+    db.todo.findById(todoId).then(function(todo){
+        if(todo){
+            res.json(todo.toJSON());
+        }
+        else {
+            res.status(404).send();
+        }
+
+    }, function(e){
+        res.status(500).send();
+    })
 });
 app.post('/todos', function (req, res){
     var body = _.pick(req.body, 'description', 'completed');
