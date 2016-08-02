@@ -46,14 +46,11 @@ app.post('/todos', function (req, res){
     }
 
     body.description = body.description.trim();
-
-    body.id = todoNextId++;
-    todos.push(body);
-    console.log('description');
-    res.json(body);
-
-
-
+    db.todo.create(body).then(function(todo){
+        res.json(todo.toJSON());
+    }, function(e){
+        res.status(400).json(e);
+    });
 });
 app.delete('/todos/:id', function(req, res){
     var todoId = parseInt(req.params.id);
