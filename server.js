@@ -80,30 +80,35 @@ app.delete('/todos/:id', function(req, res){
 
 app.put('/todos/:id', function(req, res){
     var body = _.pick(req.body, 'description', 'completed');
-    var validAttibutes = {};
-    if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
+    var
+        validAttibutes = {};
+    if(body.hasOwnProperty('completed')){
         validAttibutes.completed = body.completed;
 
     }
-    else if(body.hasOwnProperty('completed')){
-        return res.status(400).send();
-    }
-    if(body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0){
+    if(body.hasOwnProperty('description')){
+
         validAttibutes.description = body.description;
 
     }
-    else if(body.hasOwnProperty('description')){
-        return res.status(400).send();
-    }
     var todoId = parseInt(req.params.id, 10);
-    var matchedTodo = _.findWhere(todos, {id: todoId});
-    if(matchedTodo){
-        _.extend(matchedTodo, validAttibutes);
-        res.json(matchedTodo);
-    }
-    else {
-        return res.status(404).json({"error": "No todos with given id found"});
-    }
+    db.todo.findById(todoId).then(function(todo){
+        if(todo){
+            return todo.update(
+        validAttibutes);
+        }
+        else {
+            res.status(404).send();
+        }
+
+    }, function(){
+        res.status(500).send();
+    }).then(function(todo){
+        console.log(todo.toJSON());
+        res.json(todo.toJSON());
+    }, function(e){
+        res.status(400).send();
+    });
 });
 db.sequelize.sync().then(function(){
     app.listen(PORT, function(){
